@@ -31,7 +31,7 @@ export default function CDialog({
         <Dialog.Content
           key='dialog-content'
           bordered
-          padding="$5"
+          padding={50}
           elevate
           borderRadius="$6"
           enterStyle={{ y: 10, opacity: 0 }}
