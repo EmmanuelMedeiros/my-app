@@ -1,24 +1,35 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { useFonts } from "expo-font";
+import { createTamagui, PortalProvider, TamaguiProvider } from "tamagui";
+import { defaultConfig } from "@tamagui/config/v4";
+import { SplashScreen, Stack } from "expo-router";
+import "react-native-reanimated";
+import { useEffect } from "react";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+const config = createTamagui(defaultConfig);
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const [loaded, error] = useFonts({
+    "jomhuria-regular": require("../assets/fonts/Jomhuria-Regular.ttf"),
+  });
+
+  useEffect(() => {
+    if (loaded || error) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded, error]);
+
+  if (!loaded && !error) {
+    return null;
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+    <TamaguiProvider config={config}>
+      <PortalProvider>
+      <Stack initialRouteName="(auth)">
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(main)" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+      </PortalProvider>
+    </TamaguiProvider>
   );
 }
