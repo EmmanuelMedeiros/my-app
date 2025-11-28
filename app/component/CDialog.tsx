@@ -37,7 +37,10 @@ export default function CDialog({
           enterStyle={{ y: 10, opacity: 0 }}
           exitStyle={{ y: 10, opacity: 0 }}
         >
-          {title && <Dialog.Title>{title}</Dialog.Title>}
+          {title && <Dialog.Title style={{
+            fontSize: 25,
+            marginTop: -30
+          }}>{title}</Dialog.Title>}
           {description && (
             <Dialog.Description>
               {description}
