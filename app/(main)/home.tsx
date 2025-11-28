@@ -2,9 +2,10 @@ import { Image, ScrollView, Square, Text, View, XStack, YStack } from "tamagui";
 import Container from "../component/container";
 import { useEffect, useState } from "react";
 import LoadingScreen from "../common/screen/LoadingScreen.";
-import { useNavigation } from "expo-router";
+import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import dayjs from "dayjs";
 import {
+  BackHandler,
   ImageSourcePropType,
   StyleSheet,
   TouchableOpacity,
@@ -27,6 +28,8 @@ import Animated, {
   withRepeat,
   Easing,
 } from "react-native-reanimated";
+import CDialog from "../component/CDialog";
+import { getStoreData, storeData } from "../utils/asyncStorage";
 
 export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -35,6 +38,7 @@ export default function HomeScreen() {
   const [isSlidedUntilEnd, setIsSlidedUntilEnd] = useState<boolean>(false);
   const [wentToTraining, setWentToTraining] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<string>();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState<boolean>(false);
   const [dayExercises, setDayExercise] = useState<{
     current: number;
     exercise: { name: string; image: ImageSourcePropType }[];
@@ -52,6 +56,8 @@ export default function HomeScreen() {
     ],
   });
 
+  const route = useRouter();
+
   const translateY = useSharedValue(0);
   const navigation = useNavigation();
   const opacity = useSharedValue(0);
@@ -64,9 +70,16 @@ export default function HomeScreen() {
     opacity: opacity.value,
   }));
 
+  useFocusEffect(() => {
+    BackHandler.addEventListener("hardwareBackPress", () => {
+      setIsLogoutModalOpen(true);
+      return true;
+    })
+  })
+
   useEffect(() => {
     translateY.value = withRepeat(
-      withTiming(-20, { duration: 2000 }), // move up
+      withTiming(-20, { duration: 2000 }),
       -1,
       true
     );
@@ -136,10 +149,22 @@ export default function HomeScreen() {
     setThisWeekDates(allDaysArray);
   }
 
+  const handleLogout = () => {
+    storeData("userJWT", '');
+    route.replace('/(auth)/login');
+  }
+
   const showFirstWeekDaysLine = () => {
     return (
       <>
         <YStack>
+          <CDialog
+            open={isLogoutModalOpen}
+            onOk={handleLogout}
+            setOpen={setIsLogoutModalOpen}
+            title="Logout?"
+          />
+
           <XStack gap={10} justifyContent="center">
             {thisWeekDates.map((element, index) => {
               if (index < 4) {
@@ -280,7 +305,7 @@ export default function HomeScreen() {
             ) : (
               <View style={homeScreenStyle.startedExerciseView}>
                 <Text style={homeScreenStyle.startedExerciseText}>
-                  WENT TRAINING!
+                  WENT TO TRAIN!
                 </Text>
               </View>
             )}
@@ -293,98 +318,7 @@ export default function HomeScreen() {
 
         <Image style={homeScreenStyle.runningManImage} source={runningMan} />
 
-        <Shadow
-          distance={5}
-          startColor={
-            dayExercises.current % 2 === 0 ? colors.mainBlue : colors.mainYellow
-          }
-          endColor={
-            dayExercises.current % 2 === 0 ? colors.mainBlue : colors.mainYellow
-          }
-          offset={[-10, 6]}
-        >
-          <CCard
-            style={{
-              ...homeScreenStyle.exercisesCard,
-              backgroundColor:
-                dayExercises.current % 2 === 0
-                  ? colors.mainYellow
-                  : colors.mainBlue,
-            }}
-          >
-            <View style={homeScreenStyle.exercisesCardArrows}>
-              <TouchableOpacity onPress={() => handlePassExercise("backward")}>
-                <AntDesign
-                  color={
-                    dayExercises.current % 2 === 0
-                      ? colors.mainBlue
-                      : colors.mainYellow
-                  }
-                  name="left"
-                  size={20}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handlePassExercise("forward")}>
-                <AntDesign
-                  color={
-                    dayExercises.current % 2 === 0
-                      ? colors.mainBlue
-                      : colors.mainYellow
-                  }
-                  name="right"
-                  size={20}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <Text
-              style={{
-                ...homeScreenStyle.exerciseCardText,
-                color:
-                  dayExercises.current % 2 === 0
-                    ? colors.mainBlack
-                    : colors.mainWhite,
-              }}
-            >
-              Daily Workout
-            </Text>
-
-            <Image
-              source={dayExercises.exercise[dayExercises.current]?.image}
-              width={250}
-              height={250}
-              marginBlock={-40}
-            />
-
-            <Text
-              style={{
-                ...homeScreenStyle.exerciseCardText,
-                color:
-                  dayExercises.current % 2 === 0
-                    ? colors.mainBlack
-                    : colors.mainWhite,
-              }}
-            >
-              {dayExercises.exercise[dayExercises.current]?.name ?? "--"}
-            </Text>
-          </CCard>
-        </Shadow>
-
-        <TouchableOpacity style={{
-          backgroundColor: colors.mainWhite,
-          borderRadius: 10,
-          width: '90%',
-          height: 50,
-          marginTop: 20
-        }}>
-          <Text style={{
-            color: colors.mainBlack,
-            textAlign: 'center',
-            margin: 'auto',
-            fontFamily: 'jomhuria-regular',
-            fontSize: textSize.small
-          }}>Exercises</Text>
-        </TouchableOpacity>
+        
       </Container>
         </Animated.View>
     </ScrollView>
